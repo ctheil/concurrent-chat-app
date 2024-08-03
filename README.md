@@ -34,13 +34,9 @@ for {
 First, build the server, or execute `go run` to spin up the tcp server:
 
 ```bash
-cd server && go build -o tmp/conc-chat-app && ./tmp/conc-chat-app-server
-```
-
-OR
-
-```bash
-cd server && go run main.go
+cd server
+go build -o tmp
+./tmp/conc-chat-app-server
 ```
 
 The `./client` directory is dead as I've simply utilized `$ nc localhost 8080` across different terminals like so:
