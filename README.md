@@ -7,6 +7,7 @@ Small project to apply go concurrency patterns via real world applications.
 This example leverages the `for-select loop` to manage client registration, unregistration, and message broadcasting.
 
 ```go
+// ...
 for {
  select {
  case msg := <-broadcast:
@@ -25,6 +26,7 @@ for {
   fmt.Println("Goodbye ", c.uname)
  }
 }
+// ...
 ```
 
 ## Running it locally
