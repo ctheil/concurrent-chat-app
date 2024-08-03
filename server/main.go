@@ -84,8 +84,8 @@ func handleClient(client Client) {
 		if !registered {
 			// first message
 			client.uname = message
+			registered = true
 		}
-		registered = true
 
 		if message == client.uname {
 			broadcast <- fmt.Sprintf("\n%s has joined the chat!\n", client.uname)
