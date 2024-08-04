@@ -29,6 +29,14 @@ func (r *Room) AddClient(client *Client) {
 	r.Mutex.Lock()
 	r.Clients[client.Conn] = *client
 	r.Mutex.Unlock()
+	r.Broadcast <- fmt.Sprintf("%s has joined the room\n", client.Uname)
+}
+
+func (r *Room) RemoveClient(client *Client) {
+	r.Mutex.Lock()
+	delete(r.Clients, client.Conn)
+	r.Mutex.Unlock()
+	r.Broadcast <- fmt.Sprintf("%s has left the room\n", client.Uname)
 }
 
 func NewRoom(name string) *Room {
@@ -61,7 +69,7 @@ func GetRoom(name string, id uint32, createNewIfNone bool) (room *Room, ok bool)
 
 	if r == nil && name != "" && createNewIfNone {
 		RMastMutex.Unlock()
-		return NewRoom(name), true
+		return NewRoom(name), false
 	}
 
 	RMastMutex.Unlock()

@@ -8,15 +8,6 @@ import (
 	"time"
 )
 
-// func startServer() {
-// 	go service.MonitorRooms()
-// 	service.StartWorkerPool()
-//
-// 	for i := 1; i <= 5; i++ {
-// 		service.NewRoom(fmt.Sprintf("room%d", i))
-// 	}
-// }
-
 func createClient(roomName, clientName string, wg *sync.WaitGroup, msgCount int, delay time.Duration) bool {
 	defer wg.Done()
 

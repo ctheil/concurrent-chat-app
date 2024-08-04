@@ -19,6 +19,12 @@ func (c *Client) ListenForMessages() {
 	scanner := bufio.NewScanner(c.Conn)
 	for scanner.Scan() {
 		msg := scanner.Text()
+		isCmd, cmd := messageIsCommand(msg)
+		if isCmd {
+			c.ExecuteCommand(cmd)
+			continue
+		}
+
 		// handle registration
 		if !c.IsRegistered() {
 			if err := c.HandleRegistration(msg); err != nil {
@@ -51,10 +57,10 @@ func (c *Client) HandleRegistration(data string) error {
 	// fmt.Println("client registered:", c.Uname)
 	rname := strs[1]
 
-	r, ok := GetRoom(rname, 0, true)
-	if !ok {
-		return fmt.Errorf("error searching for or creating new room")
-	}
+	r, _ := GetRoom(rname, 0, true)
+	// if !ok {
+	// 	return fmt.Errorf("error searching for or creating new room")
+	// }
 	r.AddClient(c)
 	c.Room = r
 	fmt.Printf("\n %s registered to room %s \n", c.Uname, c.Room.Name)
@@ -75,14 +81,100 @@ func (c *Client) SendMessage() {
 	}
 }
 
-func (c *Client) JoinRoomById(id uint32, rooms RoomIDS) {
-	r := rooms[id]
-	c.Room = r
-	r.AddClient(c)
-}
-
 func (c *Client) JoinRoomByName(name string, rooms RoomNames) {
 	r := rooms[name]
 	c.Room = r
 	r.AddClient(c)
 }
+
+func (c *Client) ExitRoom() {
+	c.Room.RemoveClient(c)
+	c.Room = nil
+}
+
+func messageIsCommand(s string) (bool, []string) {
+	fmt.Println("checking is cmd:", s)
+	return strings.HasPrefix(s, ":"), strings.Split(strings.TrimPrefix(s, ":"), " ")
+}
+
+func (c *Client) ExecuteCommand(cmd []string) {
+	switch cmd[0] {
+	case "help", "h":
+		fmt.Println("Client issued help")
+		c.Send <- help
+	// c.Send <- //help message
+	case "exit", "e":
+		fmt.Println("Client issued exit")
+		c.Conn.Close()
+	case "cr", "change-room", "changeroom", "change_room":
+		if cmd[1] == "" {
+			c.Send <- "change room requires the name of the room you wish to switch into, like so ':cr room_2'"
+			return
+		}
+		c.ExitRoom()
+		r, ok := GetRoom(cmd[1], 0, false)
+		if !ok {
+			c.Send <- fmt.Sprintf("No room found with name %s...", cmd[1])
+			return
+		}
+		c.Room = r
+		r.AddClient(c)
+		c.Send <- fmt.Sprintf("changed room to %s", cmd[1])
+	case "new", "n", "nr":
+		if cmd[1] == "" {
+			c.Send <- "new room requires the name of the room you wish to create, like so ':n room_2'"
+			return
+		}
+		r, ok := GetRoom(cmd[1], 0, true)
+		if ok {
+			c.Send <- fmt.Sprintf("%s already exists. use ':cr %s' to change into that room.", cmd[1], cmd[1])
+			return
+		}
+		c.ExitRoom()
+		r.AddClient(c)
+		c.Room = r
+		c.Send <- fmt.Sprintf("%s created new room %s", c.Uname, cmd[1])
+	case "erm":
+		fmt.Println("client issued erm cmd")
+		if cmd[1] == "" || cmd[2] == "" {
+			c.Send <- "erm requires the name of the room you with to message, followed by the message, like so ':erm room_2 some message'"
+			return
+		}
+		r, ok := GetRoom(cmd[1], 0, false)
+		if !ok {
+			c.Send <- fmt.Sprintf("No room found with name %s...", cmd[1])
+			return
+		}
+		r.Broadcast <- fmt.Sprintf("[%s] from room %s says: %s", c.Uname, c.Room.Name, cmd[2])
+		c.Send <- fmt.Sprintf("message sent to %s", cmd[1])
+		return
+	default:
+		c.Send <- fmt.Sprintf("%s is an unknown command. type :h for help.", cmd[0])
+
+	}
+}
+
+const help = `CONC Chat App: 
+
+  :h or :help will always issue this command.
+
+  :e or :exit will end your current session.
+
+  :cr or :change-room or :changeroom or :change_room 
+  allows you to switch out of your current room
+  and into a different room. 
+  e.g. ':cr <room name>'
+
+  :new or :n of :nr 
+  allows you to switch out of your current room 
+  and into a brand new room
+  e.g. ':n <room name>
+  :erm
+  Stands for extra-room message, 
+  allowing you to quickly send messages 
+  to another room without leaving your current 
+  room. 
+  e.g. ':era <room name> send this message to anohter room!'
+
+  Enjoy!
+  `
