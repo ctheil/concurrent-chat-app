@@ -1,6 +1,9 @@
 # Conc Chat App
 
-Small project to apply go concurrency patterns via real world applications.
+### Small project to apply go concurrency patterns via real world applications.
+
+![preview](https://github.com/user-attachments/assets/29c782a7-643c-4440-ad9e-f4cf7e84ce89)
+
 
 ## For-Select Loop
 
