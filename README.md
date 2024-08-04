@@ -41,20 +41,20 @@ go build -o tmp
 
 The `./client` directory is dead as I've simply utilized `$ nc localhost 8080` across different terminals like so:
 
-Leveraging a terminal-multiplexer with 3 windows (or by just opening three different terminal windows), execute the following in each:
+1. Leveraging a terminal-multiplexer with 3 windows (or by just opening three different terminal windows), execute the following in each:
 
 ```sh
 nc localhost 8080
 ```
 
-Upon client registration, the server will respond with:
+2. Upon client registration, the server will respond with:
 
 ```
 ❯ nc localhost 8080
 Hello! Please provide a screen name:
 ```
 
-For the first type `room`, then for the remaining two windows, provide different screen names: `foo` and `bar`
+3. For the first type `room`, then for the remaining two windows, provide different screen names: `foo` and `bar`
 
 ```
 room has joined the chat!
