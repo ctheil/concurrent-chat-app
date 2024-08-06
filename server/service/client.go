@@ -97,6 +97,37 @@ func messageIsCommand(s string) (bool, []string) {
 	return strings.HasPrefix(s, ":"), strings.Split(strings.TrimPrefix(s, ":"), " ")
 }
 
+func (c *Client) ChangeRoom(rname string) error {
+	c.ExitRoom()
+	r, ok := GetRoom(rname, 0, false)
+	if !ok {
+		return fmt.Errorf("no room found with name %s", rname)
+	}
+	c.Room = r
+	r.AddClient(c)
+	return nil
+}
+
+func (c *Client) NewRoom(rname string) error {
+	r, ok := GetRoom(rname, 0, true)
+	if ok {
+		return fmt.Errorf("%s already exists", rname)
+	}
+	c.ExitRoom()
+	r.AddClient(c)
+	c.Room = r
+	return nil
+}
+
+func (c *Client) ExtraRoomMessage(room, msg string) error {
+	r, ok := GetRoom(room, 0, false)
+	if !ok {
+		return fmt.Errorf("%s room not found", room)
+	}
+	r.Broadcast <- fmt.Sprintf("[%s] from room %s says: %s", c.Uname, c.Room.Name, msg)
+	return nil
+}
+
 func (c *Client) ExecuteCommand(cmd []string) {
 	switch cmd[0] {
 	case "help", "h":
@@ -111,28 +142,18 @@ func (c *Client) ExecuteCommand(cmd []string) {
 			c.Send <- "change room requires the name of the room you wish to switch into, like so ':cr room_2'"
 			return
 		}
-		c.ExitRoom()
-		r, ok := GetRoom(cmd[1], 0, false)
-		if !ok {
-			c.Send <- fmt.Sprintf("No room found with name %s...", cmd[1])
-			return
+		if err := c.ChangeRoom(cmd[1]); err != nil {
+			c.Send <- fmt.Sprintf("error: %s", err.Error())
 		}
-		c.Room = r
-		r.AddClient(c)
 		c.Send <- fmt.Sprintf("changed room to %s", cmd[1])
 	case "new", "n", "nr":
 		if cmd[1] == "" {
 			c.Send <- "new room requires the name of the room you wish to create, like so ':n room_2'"
 			return
 		}
-		r, ok := GetRoom(cmd[1], 0, true)
-		if ok {
-			c.Send <- fmt.Sprintf("%s already exists. use ':cr %s' to change into that room.", cmd[1], cmd[1])
-			return
+		if err := c.NewRoom(cmd[1]); err != nil {
+			c.Send <- fmt.Sprintf("error: %s. If the room already exists, switch into it using ':cr %s", err.Error(), cmd[1])
 		}
-		c.ExitRoom()
-		r.AddClient(c)
-		c.Room = r
 		c.Send <- fmt.Sprintf("%s created new room %s", c.Uname, cmd[1])
 	case "erm":
 		fmt.Println("client issued erm cmd")
@@ -140,12 +161,9 @@ func (c *Client) ExecuteCommand(cmd []string) {
 			c.Send <- "erm requires the name of the room you with to message, followed by the message, like so ':erm room_2 some message'"
 			return
 		}
-		r, ok := GetRoom(cmd[1], 0, false)
-		if !ok {
-			c.Send <- fmt.Sprintf("No room found with name %s...", cmd[1])
-			return
+		if err := c.ExtraRoomMessage(cmd[1], cmd[2]); err != nil {
+			c.Send <- err.Error()
 		}
-		r.Broadcast <- fmt.Sprintf("[%s] from room %s says: %s", c.Uname, c.Room.Name, cmd[2])
 		c.Send <- fmt.Sprintf("message sent to %s", cmd[1])
 		return
 	default:
