@@ -1,7 +1,8 @@
 # Conc Chat App
 
 *Small project to apply go concurrency patterns via real world applications*
-![preview](https://github.com/user-attachments/assets/29c782a7-643c-4440-ad9e-f4cf7e84ce89)
+
+![preview_2](https://github.com/user-attachments/assets/5c496a08-9e95-4c61-be7f-956d6ab222ed)
 
 ## Client API Interaction
 
