@@ -1,12 +1,12 @@
 # Conc Chat App
 
-### Small project to apply go concurrency patterns via real world applications.
+### Small project to apply go concurrency patterns via real world applications
 
 ![preview](https://github.com/user-attachments/assets/29c782a7-643c-4440-ad9e-f4cf7e84ce89)
 
-
 ## For-Select Loop
 
+This project utilizes a concurrent job queue to listen to broadcasted messages across room, each with a specific number of clients.
 This example leverages the `for-select loop` to manage client registration, unregistration, and message broadcasting.
 
 ```go

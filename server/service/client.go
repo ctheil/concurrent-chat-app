@@ -161,8 +161,10 @@ func (c *Client) ExecuteCommand(cmd []string) {
 			c.Send <- "erm requires the name of the room you with to message, followed by the message, like so ':erm room_2 some message'"
 			return
 		}
-		if err := c.ExtraRoomMessage(cmd[1], cmd[2]); err != nil {
+		msg := strings.Join(cmd[2:], " ") // rest of commands entered is the message
+		if err := c.ExtraRoomMessage(cmd[1], msg); err != nil {
 			c.Send <- err.Error()
+			return
 		}
 		c.Send <- fmt.Sprintf("message sent to %s", cmd[1])
 		return
