@@ -1,56 +1,25 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"net"
-	"os"
+	"github.com/ctheil/conc-chat-app-client/conn"
+	"github.com/ctheil/conc-chat-app-client/tui"
 )
 
-func send_message(msg string, conn net.Conn) {
-	_, err := conn.Write([]byte(msg))
-	if err != nil {
-		fmt.Println("error writing to server: ", err)
-		return
-	} else {
-		fmt.Println("sent!")
-	}
-
-	buffer := make([]byte, 1024)
-	n, err := conn.Read(buffer)
-	if err != nil {
-		fmt.Println("error reading from the server", err)
-		return
-	}
-
-	fmt.Println("recieved from the server:", string(buffer[:n]))
-}
-
 func main() {
-	conn, err := net.Dial("tcp", "10.0.0.218:8080")
+	tui := tui.NewApp()
+	// go tui.Listen()
+	//
+	//
+	//
+	c, err := conn.NewConnection()
 	if err != nil {
-		fmt.Println("error connection: ", err)
-		os.Exit(1)
+		tui.Error("could not read from server.")
+		tui.Run()
+		return
 	}
-	defer conn.Close()
-
-	scanner := bufio.NewScanner(os.Stdin)
-	for {
-		fmt.Println("Compose and Send message: ")
-		if scanner.Scan() {
-			text := scanner.Text()
-			if len(text) != 0 {
-				if text == "DISCONN" {
-					conn.Close()
-					fmt.Println("Disconnecting...")
-					os.Exit(0)
-				}
-				fmt.Println("sending...")
-				send_message(text, conn)
-			}
-		} else {
-			fmt.Println("Error reading input:", scanner.Err())
-			break
-		}
+	defer c.Close()
+	go conn.Listen(c, tui.Incoming, tui)
+	if err := tui.Run(); err != nil {
+		panic(err)
 	}
 }

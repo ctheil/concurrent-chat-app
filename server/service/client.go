@@ -98,11 +98,11 @@ func messageIsCommand(s string) (bool, []string) {
 }
 
 func (c *Client) ChangeRoom(rname string) error {
-	c.ExitRoom()
 	r, ok := GetRoom(rname, 0, false)
 	if !ok {
 		return fmt.Errorf("no room found with name %s", rname)
 	}
+	c.ExitRoom()
 	c.Room = r
 	r.AddClient(c)
 	return nil
